@@ -8,13 +8,21 @@ const testAI = async (req, res) => {
 
         const response = await ollama.chat({
             model: "qwen3:4b",
+
+            think: false,
+
             messages: [
                 {
                     role: "user",
-                    content:
-                        "Suggest one birthday gift for a woman who likes jewellery."
+                    content: prompt
                 }
-            ]
+            ],
+
+            format: "json",
+
+            options: {
+                temperature: 0.2
+            }
         });
 
         res.json({
@@ -137,6 +145,7 @@ Return ONLY valid JSON in this exact structure:
 
         const response = await ollama.chat({
             model: "qwen3:4b" ,
+             think: false,
 
             messages: [
                 {
