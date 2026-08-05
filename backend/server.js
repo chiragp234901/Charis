@@ -19,7 +19,9 @@ connectCloudinary()
 app.use(express.json())
 app.use(cors({
   origin: ["https://bucolic-kitsune-ae4c03.netlify.app",
-  "https://chimerical-rabanadas-5c0219.netlify.app"],
+  "https://chimerical-rabanadas-5c0219.netlify.app",
+  "https://thecharisstore.com",
+    "https://www.thecharisstore.com"],
   credentials: true,
 }));
 
