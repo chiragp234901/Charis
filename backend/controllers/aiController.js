@@ -23,14 +23,17 @@ const testAI = async (req, res) => {
         });
 
     } catch (error) {
+    console.error("========== OLLAMA ERROR ==========");
+    console.error(error);
+    console.error("Cause:", error.cause);
+    console.error("Stack:", error.stack);
+    console.error("==================================");
 
-        console.log("Qwen Error:", error);
-
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
+    res.status(500).json({
+        success: false,
+        message: error.message
+    });
+}
 };
 
 
