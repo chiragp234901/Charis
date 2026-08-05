@@ -17,23 +17,20 @@ import aiRouter from "./routes/aiRoute.js";
 const app = express();
 const port = process.env.PORT || 4000;
 
+connectDB();
+connectCloudinary();
+
 // middlewares
 app.use(cors({
-  origin(origin, callback) {
-    if (!origin) return callback(null, true);
-
-    if (
-      origin === "https://thecharisstore.com" ||
-      origin === "https://www.thecharisstore.com" ||
-      origin.endsWith(".netlify.app")
-    ) {
-      return callback(null, true);
-    }
-
-    return callback(new Error("Not allowed by CORS"));
-  },
-  credentials: true,
+  origin: [
+    "http://localhost:5173",
+    "https://thecharisstore.com",
+    "https://www.thecharisstore.com"
+  ],
+  credentials: true
 }));
+
+  
 
 app.use(express.json());
 

@@ -1,20 +1,21 @@
 import ollama from "../config/ollama.js";
 import productModel from "../models/productModel.js";
 
+// ---------------- TEST AI ----------------
 
-// Test Qwen
 const testAI = async (req, res) => {
     try {
-
-       const response = await ollama.chat({
-    model: "qwen3:4b",
-    messages: [
-        {
-            role: "user",
-            content: "Suggest one birthday gift for a woman who likes jewellery."
-        }
-    ]
-});
+        const response = await ollama.chat({
+            model: "qwen3:4b",
+            think: false,
+            messages: [
+                {
+                    role: "user",
+                    content:
+                        "Suggest one birthday gift for a woman who likes jewellery."
+                }
+            ]
+        });
 
         res.json({
             success: true,
@@ -22,21 +23,19 @@ const testAI = async (req, res) => {
         });
 
     } catch (error) {
-    console.error("========== OLLAMA ERROR ==========");
-    console.error(error);
-    console.error("Cause:", error.cause);
-    console.error("Stack:", error.stack);
-    console.error("==================================");
+        console.error("========== TEST AI ERROR ==========");
+        console.error(error);
+        console.error("===================================");
 
-    res.status(500).json({
-        success: false,
-        message: error.message
-    });
-}
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
 };
 
+// ---------------- AI RECOMMENDATIONS ----------------
 
-// AI Gift Recommendations
 const getRecommendations = async (req, res) => {
     try {
 
@@ -47,7 +46,6 @@ const getRecommendations = async (req, res) => {
             preferences
         } = req.body;
 
-        // Validate recipient
         if (!recipient) {
             return res.status(400).json({
                 success: false,
@@ -55,143 +53,161 @@ const getRecommendations = async (req, res) => {
             });
         }
 
-        // Build MongoDB filter
         const filter = {
-            recipient: recipient
+            recipient
         };
 
-        // Apply budget if provided
         if (budget) {
             filter.price = {
                 $lte: Number(budget)
             };
         }
 
-        // Get products from MongoDB
         const products = await productModel
-            .find(filter)
-            .limit(30);
+    .find(filter)
+    .sort({ bestseller: -1, price: 1 })
+    .limit(8);
 
-        if (products.length === 0) {
+        if (!products.length) {
             return res.json({
                 success: true,
-                recommendations: [],
-                message: "No suitable products found"
+                recommendations: []
             });
         }
 
-        // Only send useful information to Qwen
         const productData = products.map(product => ({
-            id: product._id.toString(),
             name: product.name,
-            description: product.description,
             category: product.category,
             subCategory: product.subCategory,
             price: product.price,
-            bestseller: product.bestseller
+            bestseller: product.bestseller,
+            description: product.description.slice(0, 120)
         }));
 
-        const prompt = `
-You are an AI gift recommendation assistant for an online gift store.
+const prompt = `
+You are an AI gift recommendation assistant.
 
-Your job is to recommend the best products from the provided product list.
-
-CUSTOMER INFORMATION:
+Customer:
 
 Recipient: ${recipient}
-Occasion: ${occasion || "General gift"}
-Budget: ${budget ? `₹${budget}` : "No specific budget"}
-Preferences: ${preferences || "No specific preferences"}
+Occasion: ${occasion || "Gift"}
+Budget: ₹${budget || "No limit"}
+Preferences: ${preferences || "None"}
 
-AVAILABLE PRODUCTS:
+Products:
 
-${JSON.stringify(productData, null, 2)}
+${JSON.stringify(productData)}
 
-INSTRUCTIONS:
+Return ONLY valid JSON.
 
-1. Recommend the best 5 products or fewer if there are not enough suitable products.
-2. ONLY recommend products from the provided list.
-3. NEVER create or invent a product.
-4. Consider the recipient.
-5. Consider the occasion.
-6. Consider the customer's budget.
-7. Consider the customer's preferences.
-8. Carefully read the product descriptions.
-9. Consider category and subcategory.
-10. Give each recommendation a score from 0 to 100.
-11. Give a short explanation for each recommendation.
+Rules:
 
-Return ONLY valid JSON in this exact structure:
+- Recommend up to 5 products.
+- ONLY choose from the given list.
+- productName must exactly match the product name.
+- score must be an integer.
+- reason must be under 20 words.
+
+Example:
 
 {
-    "recommendations": [
-        {
-            "productId": "MongoDB_PRODUCT_ID",
-            "score": 95,
-            "reason": "Short explanation"
-        }
-    ]
+  "recommendations":[
+    {
+      "productName":"Diamond Necklace",
+      "score":95,
+      "reason":"Elegant bestseller within budget."
+    }
+  ]
 }
 `;
 
-        const response = await ollama.chat({
-            
-    model: "qwen3:4b",
-    think: false,
-    messages: [
-        {
-            role: "user",
-            content: prompt
+        console.log("1. Received request");
+
+                const response = await ollama.chat({
+                model: "qwen3:4b",
+                think: false,
+                format: "json",
+                options: {
+                    temperature: 0.1,
+                    num_predict: 250
+                },
+                messages: [
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ]
+            });
+
+        console.log("2. Ollama responded");
+
+        console.log("========== RAW AI ==========");
+        console.log(response.message.content);
+        console.log("============================");
+
+        let aiResult;
+
+        try {
+            aiResult = JSON.parse(response.message.content);
+        } catch (err) {
+
+            console.error("Invalid AI JSON");
+            console.error(response.message.content);
+
+            return res.status(500).json({
+                success: false,
+                message: "AI returned invalid JSON."
+            });
         }
-    ],
-    format: "json",
-    options: {
-        temperature: 0.2
-    }
-});
-console.log("========== RAW AI ==========");
-console.log(response.message.content);
-console.log("============================");
 
-        const aiResult = JSON.parse(
-            response.message.content
-        );
+        console.log("3. JSON parsed");
 
-        // Match AI product IDs with actual MongoDB products
-        const recommendations = aiResult.recommendations
-            .map(recommendation => {
+        const recommendations = (aiResult.recommendations || [])
+            .map(rec => {
 
                 const product = products.find(
-                    item =>
-                        item._id.toString() === recommendation.productId
+                    p =>
+                        p.name.trim().toLowerCase() ===
+                        String(rec.productName)
+                            .trim()
+                            .toLowerCase()
                 );
 
-                if (!product) {
-                    return null;
-                }
+                if (!product) return null;
 
                 return {
                     product,
-                    score: recommendation.score,
-                    reason: recommendation.reason
+                    score:
+                        Number(
+                            String(rec.score).replace(/[^0-9]/g, "")
+                        ) || 0,
+                    reason: rec.reason || ""
                 };
             })
-            .filter(item => item !== null);
+            .filter(Boolean);
 
-        res.json({
+        return res.json({
             success: true,
             recommendations
         });
 
     } catch (error) {
 
-        console.log("Recommendation Error:", error);
+        console.error("========== RECOMMENDATION ERROR ==========");
+        console.error(error);
+        console.error("Message:", error.message);
+        console.error("Cause:", error.cause);
+        console.error("Stack:", error.stack);
+        console.error("==========================================");
 
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             message: error.message
         });
     }
 };
 
-export { testAI, getRecommendations };
+export {
+    testAI,
+    getRecommendations
+};
