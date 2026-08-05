@@ -135,6 +135,7 @@ Return ONLY valid JSON in this exact structure:
 `;
 
         const response = await ollama.chat({
+            
     model: "qwen3:4b",
     think: false,
     messages: [
@@ -148,6 +149,9 @@ Return ONLY valid JSON in this exact structure:
         temperature: 0.2
     }
 });
+console.log("========== RAW AI ==========");
+console.log(response.message.content);
+console.log("============================");
 
         const aiResult = JSON.parse(
             response.message.content
