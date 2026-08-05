@@ -1,1 +1,1 @@
-export const backendUrl = "https://charis-bycs.onrender.com";
+export const backendUrl = "https://api.thecharisstore.com";
