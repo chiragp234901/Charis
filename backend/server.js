@@ -18,7 +18,7 @@ connectCloudinary()
 // middlewares
 app.use(express.json())
 app.use(cors({
-  origin: "https://bucolic-kitsune-ae4c03.netlify.app/",
+  origin: "https://bucolic-kitsune-ae4c03.netlify.app",
   credentials: true,
 }));
 
