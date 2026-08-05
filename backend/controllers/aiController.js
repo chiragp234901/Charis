@@ -6,24 +6,15 @@ import productModel from "../models/productModel.js";
 const testAI = async (req, res) => {
     try {
 
-        const response = await ollama.chat({
-            model: "qwen3:4b",
-
-            think: false,
-
-            messages: [
-                {
-                    role: "user",
-                    content: prompt
-                }
-            ],
-
-            format: "json",
-
-            options: {
-                temperature: 0.2
-            }
-        });
+       const response = await ollama.chat({
+    model: "qwen3:4b",
+    messages: [
+        {
+            role: "user",
+            content: "Suggest one birthday gift for a woman who likes jewellery."
+        }
+    ]
+});
 
         res.json({
             success: true,
@@ -144,22 +135,19 @@ Return ONLY valid JSON in this exact structure:
 `;
 
         const response = await ollama.chat({
-            model: "qwen3:4b" ,
-             think: false,
-
-            messages: [
-                {
-                    role: "user",
-                    content: prompt
-                }
-            ],
-
-            format: "json",
-
-            options: {
-                temperature: 0.2
-            }
-        });
+    model: "qwen3:4b",
+    think: false,
+    messages: [
+        {
+            role: "user",
+            content: prompt
+        }
+    ],
+    format: "json",
+    options: {
+        temperature: 0.2
+    }
+});
 
         const aiResult = JSON.parse(
             response.message.content
