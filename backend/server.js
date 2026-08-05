@@ -9,37 +9,34 @@ import cartRouter from './routes/cartRoute.js'
 import orderRouter from './routes/orderRoute.js'
 import aiRouter from "./routes/aiRoute.js";
 
-// App Config
 const app = express()
-const port = process.env.PORT || 4000
-connectDB()
-connectCloudinary()
-
 
 // middlewares
 app.use(cors({
-  origin: [
-    "https://bucolic-kitsune-ae4c03.netlify.app",
-    "https://chimerical-rabanadas-5c0219.netlify.app",
-    "https://thecharisstore.com",
-    "https://www.thecharisstore.com"
-  ],
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "token"]
-}));
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
 
-app.options("*", cors());
+    if (
+      origin === "https://thecharisstore.com" ||
+      origin === "https://www.thecharisstore.com" ||
+      origin.endsWith(".netlify.app")
+    ) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
 
 app.use(express.json());
 
-// api endpoints
-app.use('/api/user',userRouter)
-app.use('/api/product',productRouter)
-app.use('/api/cart',cartRouter)
-app.use('/api/order',orderRouter)
-app.use('/api/ai',aiRouter)
-
+// Routes
+app.use('/api/user', userRouter)
+app.use('/api/product', productRouter)
+app.use('/api/cart', cartRouter)
+app.use('/api/order', orderRouter)
+app.use('/api/ai', aiRouter)
 app.get('/',(req,res)=>{
     res.send("API Working")
 })
