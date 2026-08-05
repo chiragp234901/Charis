@@ -15,15 +15,23 @@ const port = process.env.PORT || 4000
 connectDB()
 connectCloudinary()
 
+
 // middlewares
-app.use(express.json())
 app.use(cors({
-  origin: ["https://bucolic-kitsune-ae4c03.netlify.app",
-  "https://chimerical-rabanadas-5c0219.netlify.app",
-  "https://thecharisstore.com",
-    "https://www.thecharisstore.com"],
+  origin: [
+    "https://bucolic-kitsune-ae4c03.netlify.app",
+    "https://chimerical-rabanadas-5c0219.netlify.app",
+    "https://thecharisstore.com",
+    "https://www.thecharisstore.com"
+  ],
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "token"]
 }));
+
+app.options("*", cors());
+
+app.use(express.json());
 
 // api endpoints
 app.use('/api/user',userRouter)
