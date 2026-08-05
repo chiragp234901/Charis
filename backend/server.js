@@ -9,7 +9,8 @@ import cartRouter from './routes/cartRoute.js'
 import orderRouter from './routes/orderRoute.js'
 import aiRouter from "./routes/aiRoute.js";
 
-const app = express()
+const app = express();
+const port = process.env.PORT || 4000;
 
 // middlewares
 app.use(cors({
